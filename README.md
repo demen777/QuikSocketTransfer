@@ -91,24 +91,24 @@ config = {
 {
   "id": "callback", 
   "result": {
-  "cbplused": 5684, 
-  "cbp_prev_limit": 300000, 
-  "varmargin": 0, 
-  "options_premium": 0, 
-  "limit_type": 0, 
-  "firmid": "SPBFUT000000", 
-  "currcode": "SUR", 
-  "cbplused_for_orders": 0, 
-  "liquidity_coef": 1, 
-  "real_varmargin": 0, 
-  "cbplused_for_positions": 5684, 
-  "accruedint": -0.5, 
-  "kgo": 1, 
-  "ts_comission": -0.5, 
-  "cbplplanned": 294315.5, 
-  "trdaccid": "SPBFUT000bb", 
-  "cbplimit": 300000
-},
+    "cbplused": 5684, 
+    "cbp_prev_limit": 300000, 
+    "varmargin": 0, 
+    "options_premium": 0, 
+    "limit_type": 0, 
+    "firmid": "SPBFUT000000", 
+    "currcode": "SUR", 
+    "cbplused_for_orders": 0, 
+    "liquidity_coef": 1, 
+    "real_varmargin": 0, 
+    "cbplused_for_positions": 5684, 
+    "accruedint": -0.5, 
+    "kgo": 1, 
+    "ts_comission": -0.5, 
+    "cbplplanned": 294315.5, 
+    "trdaccid": "SPBFUT000bb", 
+    "cbplimit": 300000
+  },
   "callback_name": "OnFuturesLimitChange"
 }
 ```
