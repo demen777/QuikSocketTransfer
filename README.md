@@ -49,7 +49,7 @@ config = {
 
 **Вызов методов Quik**
 
-Запрос
+Запрос isConnected
 
 ```json
 {
@@ -65,6 +65,25 @@ config = {
 {
   "id": 2,
   "result": [1]
+}
+```
+
+Запрос getInfoParam
+
+```json
+{
+  "id": 3,
+  "method": "getInfoParam",
+  "args": ["VERSION"] // Список аргументов метода
+}
+```
+
+Ответ
+
+```json
+{
+  "id": 3,
+  "result": ["7.18.1.20"]
 }
 ```
 
