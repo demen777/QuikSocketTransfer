@@ -5,9 +5,8 @@ json = dofile(getScriptPath() .. "\\json.lua")
 dofile(getScriptPath() .. "\\callbacks.lua")
 dofile(getScriptPath() .. "\\data_source.lua")
 
-accepting = true
+local accepting = true
 clients = {}
-client_id = 0
 
 function NewMessage(client_table, mes)
     PrintDbgStr("New message: " .. mes)
@@ -83,28 +82,58 @@ end
 
 function main()
     s = assert(socket.bind(config.address, config.port))
-    s:settimeout(0.01)
 
     while accepting do
         local c = s:accept()
+        c:settimeout(0.01)
+        local client_table = {
+            c = c,
+            auth = false,
+            ds_table = {},
+        }
+        table.insert(clients, client_table)
 
-        if (c == nil) then
-            resumeThread()
-        else
-            c:settimeout(0.01)
-            local client_table = {
-                c = c,
-                t = makeThread(),
-                auth = false,
-                ds_table = {},
-            }
-            table.insert(clients, client_table)
-            client_id = #clients
+        PrintDbgStr("New connect")
 
-            PrintDbgStr("New connect")
+        local t = coroutine.create(function(c)
+            local closed = false
 
-            coroutine.resume(client_table.t, client_table.c, client_table)
-        end
+            while accepting and not closed do
+                local mes, i, s, error = "", 0, "", ""
+
+                while true do
+                    s, error = c:receive(i, s)
+
+                    if s ~= nil then
+                        i = i + 1
+                        mes = s
+                    elseif error == "closed" then
+                        closed = true
+
+                        local result, key = table_search(clients, client_table)
+                        if (result) then
+                            table.remove(clients, key)
+                        end
+
+                        PrintDbgStr("Closed connect")
+
+                        break
+                    else break
+                    end
+                end
+
+                if mes ~= "" then
+                    local split_mes = split(mes, config.send_delimitter)
+
+                    for key, value in pairs(split_mes) do
+                        NewMessage(client_table, value)
+                    end
+                end
+            end
+
+            c:close()
+        end)
+        coroutine.resume(t, c)
     end
 end
 

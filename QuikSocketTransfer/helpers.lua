@@ -85,3 +85,71 @@ function broadcastCallback(callback_name, result)
         result = result,
     }))
 end
+
+-- Создает поток
+function makeThread()
+    local t = coroutine.create(function(c, client_table)
+        local closed = false
+
+        while accepting and not closed do
+            local mes, i, s, error = "", 0, "", ""
+
+            while true do
+                s, error = c:receive(i, s)
+
+                if s ~= nil then
+                    i = i + 1
+                    mes = s
+                elseif error == "closed" then
+                    closed = true
+
+                    local result, key = table_search(clients, client_table)
+                    if (result) then
+                        table.remove(clients, key)
+                    end
+
+                    PrintDbgStr("Closed connect")
+
+                    break
+                else break
+                end
+            end
+
+            if mes ~= "" then
+                local split_mes = split(mes, config.send_delimitter)
+
+                for key, value in pairs(split_mes) do
+                    NewMessage(client_table, value)
+                end
+            end
+
+            coroutine.yield()
+        end
+
+        c:close()
+    end)
+
+    return t
+end
+
+-- Продолжает выполнение потоков
+function resumeThread()
+    if (#clients == 0) then return end
+
+    client_id = client_id + 1
+
+    if (client_id > #clients) then
+        client_id = 1
+    end
+
+    local client_table
+
+    for i=client_id, #clients do
+        if (clients[i] ~= nil) then
+            client_id = i
+            client_table = clients[i]
+        end
+    end
+
+    coroutine.resume(client_table.t, client_table.c, client_table)
+end
