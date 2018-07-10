@@ -39,7 +39,7 @@ function sendError(c, id, error)
 end
 
 -- Проверка security
-function checkSecurity(security, client_table)
+function checkSecurity(client_table, security)
     if (config.security == security) then
         client_table.auth = true
         return true

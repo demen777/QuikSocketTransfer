@@ -3,6 +3,7 @@ dofile(getScriptPath() .. "\\config.lua")
 dofile(getScriptPath() .. "\\helpers.lua")
 json = dofile(getScriptPath() .. "\\json.lua")
 dofile(getScriptPath() .. "\\callbacks.lua")
+dofile(getScriptPath() .. "\\data_source.lua")
 
 local accepting = true
 clients = {}
@@ -37,8 +38,22 @@ function NewMessage(client_table, mes)
     -- Выполняем метод, отлавливаем ошибки
     -- Если метод авторизации, то подставляем в аргументы client_table
     local code
-    if (json_mes.method == "checkSecurity") then
-        code = "return {" .. json_mes.method .. "(" .. args_string .. ", client_table)}"
+    -- Методы которым нужен client_table
+    if (json_mes.method == "checkSecurity" or
+        json_mes.method == "CreateDataSource" or
+        json_mes.method == "O" or
+        json_mes.method == "H" or
+        json_mes.method == "L" or
+        json_mes.method == "C" or
+        json_mes.method == "V" or
+        json_mes.method == "T" or
+        json_mes.method == "Size" or
+        json_mes.method == "Close" or
+        json_mes.method == "SetUpdateCallback" or
+        json_mes.method == "SetEmptyCallback"
+    ) then
+        args_string = "client_table, " .. args_string
+        code = "return {" .. json_mes.method .. "(" .. args_string .. ")}"
     else
         code = "return {" .. json_mes.method .. "(" .. args_string .. ")}"
     end
@@ -74,6 +89,7 @@ function main()
         local client_table = {
             c = c,
             auth = false,
+            ds_table = {},
         }
         table.insert(clients, client_table)
 

@@ -131,3 +131,80 @@ config = {
   "callback_name": "OnFuturesLimitChange"
 }
 ```
+
+**Работа с графиками**
+
+Создаем data source
+
+Запрос CreateDataSource
+
+```json
+{
+  "id": 4,
+  "method": "CreateDataSource",
+  "args": ["SPBFUT", "SiU8", "INTERVAL_TICK"]
+}
+```
+
+Ответ
+
+Успешный ответ
+
+```json
+{
+  "id": 4,
+  "result": [1] // В случае успеха возвращается id data source, 
+}
+```
+
+Ответ с ошибкой
+
+```json
+{
+  "id": 4,
+  "result": ["SPBFUT1 - unknown class code."]
+}
+```
+
+Запрос SetUpdateCallback
+
+```json
+{
+  "id": 5,
+  "method": "SetUpdateCallback",
+  "args": [1] // Передаем id data source
+}
+```
+
+Ответ
+
+Успешный ответ
+
+```json
+{
+  "id": 5,
+  "result": [true]
+}
+```
+
+Ответ с ошибкой
+
+```json
+{
+  "id": 5,
+  "result": [-1] // -1 Возвращается если не удалось найти id data source
+}
+```
+
+После того как установлен UpdateCallback сервер будет отправлять вам данные переданные в этот колбэк
+
+Ответ UpdateCallback
+
+```json
+{
+  "id": "callback",
+  "callback_name": "UpdateCallback",
+  "result": 8388,
+  "ds_id": 1
+}
+```
