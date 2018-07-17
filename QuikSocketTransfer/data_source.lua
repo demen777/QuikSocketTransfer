@@ -2,7 +2,7 @@ CreateDataSourceOrig = CreateDataSource
 local DS_ID_NOT_FOUND = -1
 
 -- Создаем data source, в случае успеха возвращаем id data source
-function CreateDataSource(client_table, class_code, sec_code, interval, param)
+function CreateDataSource(class_code, sec_code, interval, param)
     local ds, error
 
     if (param) then
@@ -15,112 +15,116 @@ function CreateDataSource(client_table, class_code, sec_code, interval, param)
         return error
     end
 
-    table.insert(client_table.ds_table, ds)
+    table.insert(ds_tables, ds)
 
-    return #client_table.ds_table
+    return #ds_tables
 end
 
 -- Open
-function O(client_table, id, index)
-    if (client_table.ds_table[id] == nil) then
+function O(id, index)
+    if (ds_tables[id] == nil) then
         return DS_ID_NOT_FOUND
     end
 
-    return client_table.ds_table[id]:O(index)
+    return ds_tables[id]:O(index)
 end
 
 -- High
-function H(client_table, id, index)
-    if (client_table.ds_table[id] == nil) then
+function H(id, index)
+    if (ds_tables[id] == nil) then
         return DS_ID_NOT_FOUND
     end
 
-    return client_table.ds_table[id]:H(index)
+    return ds_tables[id]:H(index)
 end
 
 -- Low
-function L(client_table, id, index)
-    if (client_table.ds_table[id] == nil) then
+function L(id, index)
+    if (ds_tables[id] == nil) then
         return DS_ID_NOT_FOUND
     end
 
-    return client_table.ds_table[id]:L(index)
+    return ds_tables[id]:L(index)
 end
 
 -- Close
-function C(client_table, id, index)
-    if (client_table.ds_table[id] == nil) then
+function C(id, index)
+    if (ds_tables[id] == nil) then
         return DS_ID_NOT_FOUND
     end
 
-    return client_table.ds_table[id]:C(index)
+    return ds_tables[id]:C(index)
 end
 
 -- Volume
-function V(client_table, id, index)
-    if (client_table.ds_table[id] == nil) then
+function V(id, index)
+    if (ds_tables[id] == nil) then
         return DS_ID_NOT_FOUND
     end
 
-    return client_table.ds_table[id]:V(index)
+    return ds_tables[id]:V(index)
 end
 
 -- Time
-function T(client_table, id, index)
-    if (client_table.ds_table[id] == nil) then
+function T(id, index)
+    if (ds_tables[id] == nil) then
         return DS_ID_NOT_FOUND
     end
 
-    return client_table.ds_table[id]:T(index)
+    return ds_tables[id]:T(index)
 end
 
 -- Size
-function Size(client_table, id)
-    if (client_table.ds_table[id] == nil) then
+function Size(id)
+    if (ds_tables[id] == nil) then
         return DS_ID_NOT_FOUND
     end
 
-    return client_table.ds_table[id]:Size()
+    return ds_tables[id]:Size()
 end
 
 -- Close
-function Close(client_table, id)
-    if (client_table.ds_table[id] == nil) then
+function Close(id)
+    if (ds_tables[id] == nil) then
         return DS_ID_NOT_FOUND
     end
 
-    local result = client_table.ds_table[id]:Close()
+    local result = ds_tables[id]:Close()
 
     if (result) then
-        table.remove(client_table.ds_table, id)
+        table.remove(ds_tables, id)
     end
 
     return result
 end
 
 -- SetUpdateCallback
-function SetUpdateCallback(client_table, id)
-    if (client_table.ds_table[id] == nil) then
+function SetUpdateCallback(id)
+    if (ds_tables[id] == nil) then
         return DS_ID_NOT_FOUND
     end
 
-    return client_table.ds_table[id]:SetUpdateCallback(function (index)
-        client_table.c:send(config.send_delimitter .. json.encode({
+    return ds_tables[id]:SetUpdateCallback(function (index)
+        if c == nil then return end
+
+        c:send(config.send_delimitter .. json_encode({
             id = "callback",
             callback_name = "UpdateCallback",
             ds_id = id,
             result = index,
         }))
+
+        PrintDbgStr("UpdateCallback")
     end)
 end
 
 -- SetEmptyCallback
-function SetEmptyCallback(client_table, id)
-    if (client_table.ds_table[id] == nil) then
+function SetEmptyCallback(id)
+    if (ds_tables[id] == nil) then
         return DS_ID_NOT_FOUND
     end
 
-    return client_table.ds_table[id]:SetEmptyCallback()
+    return ds_tables[id]:SetEmptyCallback()
 end
 
 -- Возвращает значение интервала по строке

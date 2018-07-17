@@ -1,27 +1,30 @@
 socket = require("socket")
 dofile(getScriptPath() .. "\\config.lua")
-dofile(getScriptPath() .. "\\helpers.lua")
 json = dofile(getScriptPath() .. "\\json.lua")
+dofile(getScriptPath() .. "\\helpers.lua")
 dofile(getScriptPath() .. "\\callbacks.lua")
 dofile(getScriptPath() .. "\\data_source.lua")
 
 accepting = true
-clients = {}
-client_id = 0
+ds_tables = {}
+auth = false
+c = nil
 
-function NewMessage(client_table, mes)
+function NewMessage(mes)
     PrintDbgStr("New message: " .. mes)
 
-    local json_mes = json.decode(mes)
+    local json_mes = json_decode(mes)
+
+    if json_mes == false then return end
+
     if (not json_mes.id or not json_mes.method or not json_mes.args) then return end
 
-    if (client_table.auth == false and json_mes.method ~= "checkSecurity") then
-        return sendError(client_table.c, json_mes.id, "Not auth")
+    if (auth == false and json_mes.method ~= "checkSecurity") then
+        return sendError(json_mes.id, "Not auth")
     end
 
     -- Создаем контекст для выполняемого метода
     local context = tableMerge({
-        client_table = client_table,
         json_mes = json_mes,
     }, _G)
 
@@ -36,28 +39,7 @@ function NewMessage(client_table, mes)
         end
     end
 
-    -- Выполняем метод, отлавливаем ошибки
-    -- Если метод авторизации, то подставляем в аргументы client_table
-    local code
-    -- Методы которым нужен client_table
-    if (json_mes.method == "checkSecurity" or
-        json_mes.method == "CreateDataSource" or
-        json_mes.method == "O" or
-        json_mes.method == "H" or
-        json_mes.method == "L" or
-        json_mes.method == "C" or
-        json_mes.method == "V" or
-        json_mes.method == "T" or
-        json_mes.method == "Size" or
-        json_mes.method == "Close" or
-        json_mes.method == "SetUpdateCallback" or
-        json_mes.method == "SetEmptyCallback"
-    ) then
-        args_string = "client_table, " .. args_string
-        code = "return {" .. json_mes.method .. "(" .. args_string .. ")}"
-    else
-        code = "return {" .. json_mes.method .. "(" .. args_string .. ")}"
-    end
+    local code = "return {" .. json_mes.method .. "(" .. args_string .. ")}"
     local f, error = loadstring(code)
     local ok, result
 
@@ -66,46 +48,69 @@ function NewMessage(client_table, mes)
         ok, result = pcall(f)
 
         if (not ok) then
-            return sendError(client_table.c, json_mes.id, result)
+            return sendError(json_mes.id, result)
         end
     else
-        return sendError(client_table.c, json_mes.id, error)
+        return sendError(json_mes.id, error)
     end
 
-    result = json.encode({
+    if c == nil then return end
+
+    result = json_encode({
         id = json_mes.id,
         result = result,
     })
 
     PrintDbgStr("Message result: " .. result)
-    client_table.c:send(config.send_delimitter .. result)
+
+    c:send(config.send_delimitter .. result)
 end
 
 function main()
     s = assert(socket.bind(config.address, config.port))
-    -- С таким таймаутом более менее адекватно работает. Нет долгого затишья сообщений а потом сваливания сообщений в кучу
     s:settimeout(1)
 
     while accepting do
-        local c = s:accept()
+        c = s:accept()
 
-        if (c == nil) then
-            resumeThread()
-        else
-            -- С таким таймаутом более менее адекватно работает. Нет долгого затишья сообщений а потом сваливания сообщений в кучу
+        if (c) then
             c:settimeout(1)
-            local client_table = {
-                c = c,
-                t = makeThread(),
-                auth = false,
-                ds_table = {},
-            }
-            table.insert(clients, client_table)
-            client_id = #clients
 
             PrintDbgStr("New connect")
 
-            coroutine.resume(client_table.t, client_table.c, client_table)
+            local closed = false
+
+            while accepting and not closed do
+                local mes, i, s, error = "", 0, "", ""
+
+                while true do
+                    s, error = c:receive(i, s)
+
+                    if s ~= nil then
+                        i = i + 1
+                        mes = s
+                    elseif error == "closed" then
+                        closed = true
+                        auth = false
+                        ds_tables = {}
+                        c:close()
+                        c = nil
+
+                        PrintDbgStr("Closed connect")
+
+                        break
+                    else break
+                    end
+                end
+
+                if mes ~= "" then
+                    local split_mes = split(mes, config.send_delimitter)
+
+                    for key, value in pairs(split_mes) do
+                        NewMessage(value)
+                    end
+                end
+            end
         end
     end
 end

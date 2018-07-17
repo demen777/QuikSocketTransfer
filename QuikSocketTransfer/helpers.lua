@@ -29,19 +29,21 @@ function tableMerge(t1, t2)
 end
 
 -- Отправляет сообщение об ошибке
-function sendError(c, id, error)
+function sendError(id, error)
+    if c == nil then return end
+
     PrintDbgStr("Message error: " .. error)
 
-    c:send(config.send_delimitter .. json.encode({
+    c:send(config.send_delimitter .. json_encode({
         id = id,
         error = error,
     }))
 end
 
 -- Проверка security
-function checkSecurity(client_table, security)
+function checkSecurity(security)
     if (config.security == security) then
-        client_table.auth = true
+        auth = true
         return true
     end
 
@@ -68,88 +70,34 @@ function split(str, pat)
     return t
 end
 
--- Броадкастит сообщение на все сокеты
-function broadcast(mes)
-    for _, client_table in pairs(clients) do
-        if (client_table.auth) then
-            client_table.c:send(config.send_delimitter .. mes)
-        end
-    end
-end
+function sendCallback(callback_name, result)
+    if c == nil then return end
 
--- Броадкастит результат колбэка
-function broadcastCallback(callback_name, result)
-    broadcast(json.encode({
+    c:send(config.send_delimitter .. json_encode({
         id = "callback",
         callback_name = callback_name,
         result = result,
     }))
 end
 
--- Создает поток
-function makeThread()
-    local t = coroutine.create(function(c, client_table)
-        local closed = false
+-- ХУЙНЯ ЧТОБЫ ОТЛОВИТЬ ОШИБКУ В ЕБАНОМ LUA
 
-        while accepting and not closed do
-            local mes, i, s, error = "", 0, "", ""
+function json_encode(encode)
+    local status, result = pcall(function() return json.encode(encode) end)
 
-            while true do
-                s, error = c:receive(i, s)
-
-                if s ~= nil then
-                    i = i + 1
-                    mes = s
-                elseif error == "closed" then
-                    closed = true
-
-                    local result, key = table_search(clients, client_table)
-                    if (result) then
-                        table.remove(clients, key)
-                    end
-
-                    PrintDbgStr("Closed connect")
-
-                    break
-                else break
-                end
-            end
-
-            if mes ~= "" then
-                local split_mes = split(mes, config.send_delimitter)
-
-                for key, value in pairs(split_mes) do
-                    NewMessage(client_table, value)
-                end
-            end
-
-            coroutine.yield()
-        end
-
-        c:close()
-    end)
-
-    return t
+    if status then
+        return result
+    else
+        return false
+    end
 end
 
--- Продолжает выполнение потоков
-function resumeThread()
-    if (#clients == 0) then return end
+function json_decode(decode)
+    local status, result = pcall(function() return json.decode(decode) end)
 
-    client_id = client_id + 1
-
-    if (client_id > #clients) then
-        client_id = 1
+    if status then
+        return result
+    else
+        return false
     end
-
-    local client_table
-
-    for i=client_id, #clients do
-        if (clients[i] ~= nil) then
-            client_id = i
-            client_table = clients[i]
-        end
-    end
-
-    coroutine.resume(client_table.t, client_table.c, client_table)
 end
