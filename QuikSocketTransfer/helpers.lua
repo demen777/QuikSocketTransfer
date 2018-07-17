@@ -72,7 +72,7 @@ end
 function broadcast(mes)
     for _, client_table in pairs(clients) do
         if (client_table.auth) then
-            client_table.c:send(mes)
+            client_table.c:send(config.send_delimitter .. mes)
         end
     end
 end

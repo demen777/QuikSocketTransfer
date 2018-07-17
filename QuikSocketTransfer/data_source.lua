@@ -105,7 +105,7 @@ function SetUpdateCallback(client_table, id)
     end
 
     return client_table.ds_table[id]:SetUpdateCallback(function (index)
-        client_table.c:send(json.encode({
+        client_table.c:send(config.send_delimitter .. json.encode({
             id = "callback",
             callback_name = "UpdateCallback",
             ds_id = id,
