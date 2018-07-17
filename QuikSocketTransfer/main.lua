@@ -83,7 +83,8 @@ end
 
 function main()
     s = assert(socket.bind(config.address, config.port))
-    s:settimeout(0.01)
+    -- С таким таймаутом более менее адекватно работает. Нет долгого затишья сообщений а потом сваливания сообщений в кучу
+    s:settimeout(1)
 
     while accepting do
         local c = s:accept()
@@ -91,7 +92,8 @@ function main()
         if (c == nil) then
             resumeThread()
         else
-            c:settimeout(0.01)
+            -- С таким таймаутом более менее адекватно работает. Нет долгого затишья сообщений а потом сваливания сообщений в кучу
+            c:settimeout(1)
             local client_table = {
                 c = c,
                 t = makeThread(),
