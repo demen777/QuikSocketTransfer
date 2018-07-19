@@ -2,7 +2,7 @@ socket = require("socket")
 dofile(getScriptPath() .. "\\config.lua")
 json = dofile(getScriptPath() .. "\\json.lua")
 dofile(getScriptPath() .. "\\helpers.lua")
-dofile(getScriptPath() .. "\\callbacks.lua")
+-- dofile(getScriptPath() .. "\\callbacks.lua")
 dofile(getScriptPath() .. "\\data_source.lua")
 
 accepting = true
@@ -63,7 +63,7 @@ function NewMessage(mes)
 
     PrintDbgStr("Message result: " .. result)
 
-    c:send(config.send_delimitter .. result)
+    c:send(config.send_delimitter .. result .. "\n")
 end
 
 function main()

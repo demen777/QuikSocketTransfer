@@ -74,6 +74,16 @@ function T(id, index)
     return ds_tables[id]:T(index)
 end
 
+-- OHLCVT
+function OHLCVT(id, index)
+    if (ds_tables[id] == nil) then
+        return DS_ID_NOT_FOUND
+    end
+
+    return {ds_tables[id]:O(index), ds_tables[id]:H(index), ds_tables[id]:L(index), ds_tables[id]:C(index),
+        ds_tables[id]:V(index), ds_tables[id]:T(index)}
+end
+
 -- Size
 function Size(id)
     if (ds_tables[id] == nil) then
