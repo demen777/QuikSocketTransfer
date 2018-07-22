@@ -1,5 +1,4 @@
 CreateDataSourceOrig = CreateDataSource
-local DS_ID_NOT_FOUND = -1
 
 -- Создаем data source, в случае успеха возвращаем id data source
 function CreateDataSource(class_code, sec_code, interval, param)
@@ -12,12 +11,19 @@ function CreateDataSource(class_code, sec_code, interval, param)
     end
 
     if (error) then
-        return error
+        return packError(1, error)
     end
 
     table.insert(ds_tables, ds)
 
-    return #ds_tables
+    return packOK({#ds_tables}, 0, "OK")
+end
+
+function checkDataSourceId(id)
+    if (ds_tables[id] == nil) then
+        return packError(1, "DataSource with id = " .. id .. " doesn't exist")
+    end
+    return nil
 end
 
 -- Open
@@ -76,27 +82,24 @@ end
 
 -- OHLCVT
 function OHLCVT(id, index)
-    if (ds_tables[id] == nil) then
-        return DS_ID_NOT_FOUND
-    end
-
-    return {ds_tables[id]:O(index), ds_tables[id]:H(index), ds_tables[id]:L(index), ds_tables[id]:C(index),
-        ds_tables[id]:V(index), ds_tables[id]:T(index)}
+    error_table = checkDataSourceId(id)
+    if (error_table ~= nil) then return error_table end
+    return packOK({ds_tables[id]:O(index), ds_tables[id]:H(index), ds_tables[id]:L(index), ds_tables[id]:C(index),
+        ds_tables[id]:V(index), ds_tables[id]:T(index)})
 end
 
 -- Size
 function Size(id)
-    if (ds_tables[id] == nil) then
-        return DS_ID_NOT_FOUND
-    end
-
-    return ds_tables[id]:Size()
+    error_table = checkDataSourceId(id)
+    if (error_table ~= nil) then return error_table end
+    return packOK({ds_tables[id]:Size()})
 end
 
 -- Close
 function Close(id)
-    if (ds_tables[id] == nil) then
-        return DS_ID_NOT_FOUND
+    error_table = checkDataSourceId(id)
+    if (error_table ~= nil) then
+        return error_table
     end
 
     local result = ds_tables[id]:Close()

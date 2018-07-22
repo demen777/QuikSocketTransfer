@@ -28,26 +28,61 @@ function tableMerge(t1, t2)
     return t1
 end
 
--- Отправляет сообщение об ошибке
-function sendError(id, error)
-    if c == nil then return end
-
-    PrintDbgStr("Message error: " .. error)
-
-    c:send(config.send_delimitter .. json_encode({
-        id = id,
-        error = error,
-    }))
+function print_table(tbl)
+    for k,v in pairs(tbl) do
+        PrintDbgStr(k)
+        PrintDbgStr(v)
+    end
 end
+
+function table_to_string(tbl)
+    local result = "{"
+    for k, v in pairs(tbl) do
+        -- Check the key type (ignore any numerical keys - assume its an array)
+        if type(k) == "string" then
+            result = result.."[\""..k.."\"]".."="
+        end
+
+        -- Check the value type
+        if type(v) == "table" then
+            result = result..table_to_string(v)
+        elseif type(v) == "boolean" then
+            result = result..tostring(v)
+        else
+            result = result.."\""..v.."\""
+        end
+        result = result..","
+    end
+    -- Remove leading commas from the result
+    if result ~= "" then
+        result = result:sub(1, result:len()-1)
+    end
+    return result.."}"
+end
+
+function packResult(result, error_code, error_message)
+    local res
+    res = { ["result"] = result, ["error_code"] = error_code, ["error_message"] = error_message }
+    return res
+end
+
+function packOK(result)
+    return packResult(result, 0, "OK")
+end
+
+function packError(error_code, error_message)
+    return packResult(nill, error_code, error_message)
+end
+
 
 -- Проверка security
 function checkSecurity(security)
     if (config.security == security) then
         auth = true
-        return true
+        return packOK({true})
     end
 
-    return false
+    return packError(1, "Wrong security")
 end
 
 -- Разделить строку

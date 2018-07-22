@@ -39,27 +39,27 @@ function NewMessage(mes)
         end
     end
 
-    local code = "return {" .. json_mes.method .. "(" .. args_string .. ")}"
+    local code = "return " .. json_mes.method .. "(" .. args_string .. ")"
     local f, error = loadstring(code)
-    local ok, result
+    local ok, return_table
 
     if (f) then
         setfenv(f, context)
-        ok, result = pcall(f)
+        ok, return_table = pcall(f)
 
         if (not ok) then
-            return sendError(json_mes.id, result)
+            return_table = packError(-2, "Fail pcall on expression = " .. code)
         end
     else
-        return sendError(json_mes.id, error)
+        return_table = packError(-1, "Is not valid lua expression = " .. code)
     end
 
     if c == nil then return end
 
-    result = json_encode({
-        id = json_mes.id,
-        result = result,
-    })
+    return_table["id"] = json_mes.id
+
+    local result
+    result = json_encode(return_table)
 
     PrintDbgStr("Message result: " .. result)
 
