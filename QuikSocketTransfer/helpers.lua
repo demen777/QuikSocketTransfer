@@ -1,3 +1,4 @@
+
 -- Поиск значения в таблице
 function table_search(search_table, search_value)
     local found, search_key = false, nil
@@ -75,6 +76,13 @@ function packError(error_code, error_message)
     return packResult(nill, error_code, error_message)
 end
 
+function get_cli_data(table_name)
+	local data = {}
+	for i = 1,getNumberOf(table_name) do
+		data[i]=getItem(table_name, i)
+	end
+	return data;
+end
 
 -- Проверка security
 function checkSecurity(security)

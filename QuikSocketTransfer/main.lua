@@ -4,6 +4,7 @@ json = dofile(getScriptPath() .. "\\json.lua")
 dofile(getScriptPath() .. "\\helpers.lua")
 -- dofile(getScriptPath() .. "\\callbacks.lua")
 dofile(getScriptPath() .. "\\data_source.lua")
+dofile(getScriptPath() .. "\\tables.lua")
 
 accepting = true
 ds_tables = {}
@@ -61,15 +62,15 @@ function NewMessage(mes)
     return_table["id"] = json_mes.id
 
     local result
-    result = json_encode(return_table)
+    result = json.encode(return_table)
 
-    PrintDbgStr("Message result: " .. result)
+--    PrintDbgStr("Message result: " .. result)
 
     c:send(config.send_delimitter .. result .. "\n")
 end
 
 function main()
-    local s = assert(socket.bind(config.address, config.port))
+    s = assert(socket.bind(config.address, config.port))
     s:settimeout(1)
 
     while accepting do
@@ -83,10 +84,9 @@ function main()
             local closed = false
 
             while accepting and not closed do
-                local _, i, s, _ = "", 0, "", ""
+                local mes, i, s, error = "", 0, "", ""
 
                 while true do
-                    local error
                     s, error = c:receive(i, s)
 
                     if s ~= nil then

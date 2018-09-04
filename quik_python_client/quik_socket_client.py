@@ -1,6 +1,8 @@
 import json
 import re
-import telnetlib
+import sys
+import socket
+from io import BytesIO
 from typing import List, Any
 
 
@@ -21,19 +23,32 @@ class QuikSocketClient:
         self.port = port
         self.password = password
         self.message_id = 0
-        self.telnet = None
-        self.connect_and_auth()
+        self.socket = None
 
-    def connect_and_auth(self) -> None:
-        self.telnet = telnetlib.Telnet(self.host, self.port)
+    def __enter__(self):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.socket.connect((self.host, self.port))
         self.send_request('checkSecurity', [self.password])
+        return self
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        if self.socket:
+            self.socket.close()
 
     def send_request(self, command_name: str, args: List[Any]) -> List[Any]:
         self.message_id += 1
         request_json = {"id": self.message_id, "method": command_name, "args": args}
         message_text = json.dumps(request_json)
-        self.telnet.write(message_text.encode('ascii'))
-        response_text = self.telnet.read_until('\n'.encode('ascii')).decode('ascii').strip()
+        self.socket.sendall(message_text.encode('cp1251'))
+        with BytesIO() as response_bytes:
+            while True:
+                fragment = self.socket.recv(8192)
+                response_bytes.write(fragment)
+                if fragment[-1] == 10:
+                    break
+            response_bytes.flush()
+            response_text = response_bytes.getvalue().decode('cp1251')
+            response_bytes.close()
         m = re.match("message:\s*({.+})", response_text)
         response_text = m.group(1)
         response_json = json.loads(response_text)
