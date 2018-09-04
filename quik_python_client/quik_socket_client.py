@@ -34,7 +34,7 @@ class QuikSocketClient:
         message_text = json.dumps(request_json)
         self.telnet.write(message_text.encode('ascii'))
         response_text = self.telnet.read_until('\n'.encode('ascii')).decode('ascii').strip()
-        m = re.match("message\:\s*({.+})", response_text)
+        m = re.match("message:\s*({.+})", response_text)
         response_text = m.group(1)
         response_json = json.loads(response_text)
         if response_json['error_code'] != 0:

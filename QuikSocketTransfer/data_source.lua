@@ -82,7 +82,7 @@ end
 
 -- OHLCVT
 function OHLCVT(id, index)
-    error_table = checkDataSourceId(id)
+    local error_table = checkDataSourceId(id)
     if (error_table ~= nil) then return error_table end
     return packOK({ds_tables[id]:O(index), ds_tables[id]:H(index), ds_tables[id]:L(index), ds_tables[id]:C(index),
         ds_tables[id]:V(index), ds_tables[id]:T(index)})
@@ -90,14 +90,14 @@ end
 
 -- Size
 function Size(id)
-    error_table = checkDataSourceId(id)
+    local error_table = checkDataSourceId(id)
     if (error_table ~= nil) then return error_table end
     return packOK({ds_tables[id]:Size()})
 end
 
 -- Close
 function Close(id)
-    error_table = checkDataSourceId(id)
+    local error_table = checkDataSourceId(id)
     if (error_table ~= nil) then
         return error_table
     end

@@ -1,7 +1,17 @@
 from datetime import datetime
-from typing import List, Any
 
-from python_client.QuikSocketClient import QuikSocketClient
+from dataclasses import dataclass
+from quik_python_client.quik_socket_client import QuikSocketClient
+
+
+@dataclass(frozen=True)
+class Candle:
+    open: float
+    high: float
+    low: float
+    close: float
+    volume: int
+    dt: datetime
 
 
 class QuikDataSource:
@@ -15,7 +25,7 @@ class QuikDataSource:
 
     def _create_data_source(self) -> int:
         response = self.client.send_request("CreateDataSource",
-            [self.security_class, self.security_code, self.interval])
+                                            [self.security_class, self.security_code, self.interval])
         data_source_id = response[0]
         return data_source_id
 
@@ -24,8 +34,9 @@ class QuikDataSource:
         size = response[0]
         return size
 
-    def get_ohlcvt(self, index) -> List[Any]:
+    def get_ohlcvt(self, index) -> Candle:
         response = self.client.send_request("OHLCVT", [self.data_source_id, index])
         response[5] = datetime(year=response[5]['year'], month=response[5]['month'], day=response[5]['day'],
-            hour=response[5]['hour'], minute=response[5]['min'], second=response[5]['sec'])
-        return response
+                               hour=response[5]['hour'], minute=response[5]['min'], second=response[5]['sec'])
+        res = Candle(*response)
+        return res

@@ -20,7 +20,7 @@ function NewMessage(mes)
     if (not json_mes.id or not json_mes.method or not json_mes.args) then return end
 
     if (auth == false and json_mes.method ~= "checkSecurity") then
-        return sendError(json_mes.id, "Not auth")
+        return packError(json_mes.id, "Not auth")
     end
 
     -- Создаем контекст для выполняемого метода
@@ -31,16 +31,18 @@ function NewMessage(mes)
     -- Создаем строку аргументов
     local args_string = ""
 
-    for key, value in pairs(json_mes.args) do
+    for key, _ in pairs(json_mes.args) do
+        --noinspection StringConcatenationInLoops
         args_string = args_string .. "json_mes.args[" .. key .. "]"
 
         if (#json_mes.args ~= key) then
+            --noinspection StringConcatenationInLoops
             args_string = args_string .. ", "
         end
     end
 
     local code = "return " .. json_mes.method .. "(" .. args_string .. ")"
-    local f, error = loadstring(code)
+    local f, _ = loadstring(code)
     local ok, return_table
 
     if (f) then
@@ -67,7 +69,7 @@ function NewMessage(mes)
 end
 
 function main()
-    s = assert(socket.bind(config.address, config.port))
+    local s = assert(socket.bind(config.address, config.port))
     s:settimeout(1)
 
     while accepting do
@@ -81,13 +83,15 @@ function main()
             local closed = false
 
             while accepting and not closed do
-                local mes, i, s, error = "", 0, "", ""
+                local _, i, s, _ = "", 0, "", ""
 
                 while true do
+                    local error
                     s, error = c:receive(i, s)
 
                     if s ~= nil then
                         i = i + 1
+                        --noinspection GlobalCreationOutsideO
                         mes = s
                     elseif error == "closed" then
                         closed = true
@@ -106,7 +110,7 @@ function main()
                 if mes ~= "" then
                     local split_mes = split(mes, config.send_delimitter)
 
-                    for key, value in pairs(split_mes) do
+                    for _, value in pairs(split_mes) do
                         NewMessage(value)
                     end
                 end

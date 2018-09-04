@@ -36,28 +36,29 @@ function print_table(tbl)
 end
 
 function table_to_string(tbl)
-    local result = "{"
+    local result_table = {"{"}
     for k, v in pairs(tbl) do
         -- Check the key type (ignore any numerical keys - assume its an array)
         if type(k) == "string" then
-            result = result.."[\""..k.."\"]".."="
+            table.insert(result_table, "[\""..k.."\"]".."=")
         end
 
         -- Check the value type
         if type(v) == "table" then
-            result = result..table_to_string(v)
+            table.insert(result_table, table_to_string(v))
         elseif type(v) == "boolean" then
-            result = result..tostring(v)
+            table.insert(result_table, tostring(v))
         else
-            result = result.."\""..v.."\""
+            table.insert(result_table, "\""..v.."\"")
         end
-        result = result..","
+        table.insert(result_table, ",")
     end
+    local result = table.concat(result_table)
     -- Remove leading commas from the result
     if result ~= "" then
         result = result:sub(1, result:len()-1)
     end
-    return result.."}"
+    return result .."}"
 end
 
 function packResult(result, error_code, error_message)
@@ -78,6 +79,7 @@ end
 -- Проверка security
 function checkSecurity(security)
     if (config.security == security) then
+        --noinspection GlobalCreationOutsideO
         auth = true
         return packOK({true})
     end
