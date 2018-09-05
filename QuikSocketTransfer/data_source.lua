@@ -9,13 +9,14 @@ function CreateDataSource(class_code, sec_code, interval, param)
     else
         ds, error = CreateDataSourceOrig(class_code, sec_code, getInterval(interval))
     end
-
+	while (error == "" or error == nil) and ds:Size() == 0 do sleep(1) end
     if (error) then
         return packError(1, error)
     end
 
+    PrintDbgStr("ds len="..ds:Size())
     table.insert(ds_tables, ds)
-
+    PrintDbgStr("ds_tables len="..#ds_tables)
     return packOK({#ds_tables}, 0, "OK")
 end
 

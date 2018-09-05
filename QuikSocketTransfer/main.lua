@@ -42,14 +42,16 @@ function NewMessage(mes)
         end
     end
 
+    PrintDbgStr("args: " .. args_string)
+
     local code = "return " .. json_mes.method .. "(" .. args_string .. ")"
+    PrintDbgStr("code: " .. code)
     local f, _ = loadstring(code)
     local ok, return_table
 
     if (f) then
         setfenv(f, context)
         ok, return_table = pcall(f)
-
         if (not ok) then
             return_table = packError(-2, "Fail pcall on expression = " .. code)
         end
@@ -64,7 +66,7 @@ function NewMessage(mes)
     local result
     result = json.encode(return_table)
 
---    PrintDbgStr("Message result: " .. result)
+    PrintDbgStr("Message result: " .. result)
 
     c:send(config.send_delimitter .. result .. "\n")
 end
@@ -96,7 +98,7 @@ function main()
                     elseif error == "closed" then
                         closed = true
                         auth = false
-                        ds_tables = {}
+--                        ds_tables = {}
                         c:close()
                         c = nil
 
