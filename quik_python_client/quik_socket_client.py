@@ -21,12 +21,14 @@ class ResponseError(Exception):
 
 
 class QuikSocketClient:
+    SOCKET_TIMEOUT = 60.0
 
     def __init__(self, host: str, port: int, password: str):
         self.host = host
         self.port = port
         self.password = password
         self.message_id = 0
+        socket.setdefaulttimeout(self.SOCKET_TIMEOUT)
         self.socket = None
 
     def connect(self):
@@ -43,10 +45,9 @@ class QuikSocketClient:
             self.socket.close()
 
     def send_request(self, command_name: str, args: List[Any]) -> List[Any]:
-        logger.debug("Start send_request")
-        self.connect()
+        if self.socket is None:
+            self.connect()
         res = self._send_request(command_name, args)
-        self.close()
         logger.debug("End send_request")
         return res
 
@@ -55,7 +56,18 @@ class QuikSocketClient:
         request_json = {"id": self.message_id, "method": command_name, "args": args}
         message_text = json.dumps(request_json)
         logger.debug("_send_request before sendall")
-        self.socket.sendall(message_text.encode('cp1251'))
+        retries = 1
+        while True:
+            try:
+                self.socket.sendall(message_text.encode('cp1251'))
+                break
+            except OSError as error:
+                retries -= 1
+                logger.error(error)
+                self.close()
+                self.connect()
+                if retries < 0:
+                    raise OSError(error)
         logger.debug("_send_request after sendall")
         with BytesIO() as response_bytes:
             while True:
