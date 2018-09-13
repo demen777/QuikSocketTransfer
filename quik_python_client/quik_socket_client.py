@@ -21,7 +21,7 @@ class ResponseError(Exception):
 
 
 class QuikSocketClient:
-    SOCKET_TIMEOUT = 60.0
+    SOCKET_TIMEOUT = 600.0
 
     def __init__(self, host: str, port: int, password: str):
         self.host = host
