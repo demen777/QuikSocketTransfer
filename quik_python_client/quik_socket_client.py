@@ -3,7 +3,7 @@ import re
 import sys
 import socket
 from io import BytesIO
-from typing import List, Any
+from typing import List, Any, Optional
 import logging
 
 
@@ -21,14 +21,14 @@ class ResponseError(Exception):
 
 
 class QuikSocketClient:
-    SOCKET_TIMEOUT = 600.0
 
-    def __init__(self, host: str, port: int, password: str):
+    def __init__(self, host: str, port: int, password: str, socket_timeout: Optional[float] = 600.0):
         self.host = host
         self.port = port
         self.password = password
         self.message_id = 0
-        socket.setdefaulttimeout(self.SOCKET_TIMEOUT)
+        self._socket_timeout = socket_timeout
+        socket.setdefaulttimeout(self._socket_timeout)
         self.socket = None
 
     def connect(self):
